@@ -54,12 +54,14 @@ func main() {
 }
 
 func commandBuild(commandArgs []string) error {
+	var showHelp bool = false
 	var buildAll bool = false
 
 	var goos string
 	var goarch string
 
 	buildCommand := flag.NewFlagSet("build", flag.ExitOnError)
+	buildCommand.BoolVarP(&showHelp, "help", "h", false, "show help for this command")
 	buildCommand.BoolVarP(&buildAll, "all", "a", false, "build for all platforms")
 
 	buildCommand.StringVar(&goos, "goos", "", "Target platform")
@@ -70,12 +72,20 @@ func commandBuild(commandArgs []string) error {
 		fmt.Fprintf(os.Stderr, "Usage information for build command:\n")
 		fmt.Fprintf(os.Stderr, "  %s build [arguments]\n\n", executable)
 		fmt.Fprintf(os.Stderr, "Arguments:\n")
-		fmt.Fprintf(os.Stderr, " --all, -a     build for all platforms\n")
+		fmt.Fprintf(os.Stderr, " --help, -h                  show this help\n")
+		fmt.Fprintf(os.Stderr, " --all, -a                   build for all platforms\n")
+		fmt.Fprintf(os.Stderr, " --goos <platform>           build for specified platform\n")
+		fmt.Fprintf(os.Stderr, " --goarch <architecture>     build for specified architecture\n")
 	}
 
 	err := buildCommand.Parse(commandArgs)
 	if err != nil {
 		return err
+	}
+
+	if showHelp {
+		buildCommand.Usage()
+		return nil
 	}
 
 	if buildAll {
