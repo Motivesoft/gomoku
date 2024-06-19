@@ -20,7 +20,7 @@ func main() {
 
 	flag.Usage = func() {
 		_, executable := filepath.Split(os.Args[0])
-		fmt.Fprintf(os.Stderr, "Usage of %s:\n", executable)
+		fmt.Fprintf(os.Stderr, "Usage information for %s:\n", executable)
 		fmt.Fprintf(os.Stderr, "  %s [options] [command] [arguments]\n\n", executable)
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		fmt.Fprintf(os.Stderr, " --version, -v     show version\n")
@@ -40,7 +40,7 @@ func main() {
 		// Determine and execute the subcommand
 		switch flag.Args()[0] {
 		case "build":
-			err = build(flag.Args()[1:])
+			err = commandBuild(flag.Args()[1:])
 
 		default:
 			err = fmt.Errorf("unknown command: %s", flag.Args()[0])
@@ -53,16 +53,22 @@ func main() {
 	}
 }
 
-func build(commandArgs []string) error {
+func commandBuild(commandArgs []string) error {
 	var buildAll bool = false
+
+	var goos string
+	var goarch string
 
 	buildCommand := flag.NewFlagSet("build", flag.ExitOnError)
 	buildCommand.BoolVarP(&buildAll, "all", "a", false, "build for all platforms")
 
+	buildCommand.StringVar(&goos, "goos", "", "Target platform")
+	buildCommand.StringVar(&goarch, "goarch", "", "Target architecture")
+
 	buildCommand.Usage = func() {
 		_, executable := filepath.Split(os.Args[0])
-		fmt.Fprintf(os.Stderr, "Usage:\n")
-		fmt.Fprintf(os.Stderr, "  %s [options] build [arguments]\n\n", executable)
+		fmt.Fprintf(os.Stderr, "Usage information for build command:\n")
+		fmt.Fprintf(os.Stderr, "  %s build [arguments]\n\n", executable)
 		fmt.Fprintf(os.Stderr, "Arguments:\n")
 		fmt.Fprintf(os.Stderr, " --all, -a     build for all platforms\n")
 	}
@@ -78,32 +84,3 @@ func build(commandArgs []string) error {
 
 	return nil
 }
-
-// func executeCommand(args []string) error {
-// 	switch args[0] {
-// 	case "build":
-// 		return executeBuildCommand(args[1:])
-
-// 	default:
-// 		return fmt.Errorf("unknown command: %s", args[0])
-// 	}
-// }
-
-// func executeBuildCommand(args []string) error {
-// 	buildCommand := flag.NewFlagSet("build", flag.ExitOnError)
-
-// 	buildAll := buildCommand.BoolP("all", "a", false, "build for all platforms")
-
-// 	buildCommand.Usage()
-
-// 	err := buildCommand.Parse(args)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if *buildAll {
-// 		fmt.Println("building for all platforms")
-// 	}
-
-// 	return nil
-// }

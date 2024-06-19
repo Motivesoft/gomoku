@@ -20,6 +20,14 @@
 ### Ideas
 * Read go.mod/go.sum for information to avoid user entry
   * Use file in same general format for our own configuration?
+* Consider accepting multiple module names in some sort of structured build scenario?
+  * Need an example to work with
+* Each command in its own file?
+
+## Rules
+* Expects a module name, but will accept a `.`
+  * With `.` (which can also be a default), read `go.mod` for the module name
+* 
 
 ## Specifics - flesh this out
 * Command-based with targets, e.g.:
