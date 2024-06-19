@@ -15,13 +15,13 @@ func main() {
 	var showVersion bool
 	var showHelp bool
 
-	flagBoolVarP(&showVersion, "version", "v", false, "show version")
-	flagBoolVarP(&showHelp, "help", "h", false, "show help")
+	flag.BoolVarP(&showVersion, "version", "v", false, "show version")
+	flag.BoolVarP(&showHelp, "help", "h", false, "show help")
 
 	flag.Usage = func() {
-		_, file := filepath.Split(os.Args[0])
-		fmt.Fprintf(os.Stderr, "Usage of %s:\n", file)
-		fmt.Fprintf(os.Stderr, "  %s [options] [command] [arguments]\n\n", file)
+		_, executable := filepath.Split(os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage of %s:\n", executable)
+		fmt.Fprintf(os.Stderr, "  %s [options] [command] [arguments]\n\n", executable)
 		fmt.Fprintf(os.Stderr, "Options:\n")
 		fmt.Fprintf(os.Stderr, " --version, -v     show version\n")
 		fmt.Fprintf(os.Stderr, " --help, -h        show this help\n")
@@ -53,27 +53,19 @@ func main() {
 	}
 }
 
-func flagBoolVarP(flagVar *bool, name string, shorthand string, value bool, usage string) {
-	// If we use flag, use:
-	// 	 flag.BoolVar(flagVar, name, value, usage)
-	// 	 flag.BoolVar(flagVar, shorthand, value, usage)
-
-	flag.BoolVarP(flagVar, name, shorthand, value, usage)
-}
-
-func flagsetBoolVarP(flagSet *flag.FlagSet, flagVar *bool, name string, shorthand string, value bool, usage string) {
-	// If we use flag, use:
-	//   flagSet.BoolVar(flagVar, name, value, usage)
-	//   flagSet.BoolVar(flagVar, shorthand, value, usage)
-
-	flagSet.BoolVarP(flagVar, name, shorthand, value, usage)
-}
-
 func build(commandArgs []string) error {
-
 	var buildAll bool = false
+
 	buildCommand := flag.NewFlagSet("build", flag.ExitOnError)
-	flagsetBoolVarP(buildCommand, &buildAll, "all", "a", false, "build for all platforms")
+	buildCommand.BoolVarP(&buildAll, "all", "a", false, "build for all platforms")
+
+	buildCommand.Usage = func() {
+		_, executable := filepath.Split(os.Args[0])
+		fmt.Fprintf(os.Stderr, "Usage:\n")
+		fmt.Fprintf(os.Stderr, "  %s [options] build [arguments]\n\n", executable)
+		fmt.Fprintf(os.Stderr, "Arguments:\n")
+		fmt.Fprintf(os.Stderr, " --all, -a     build for all platforms\n")
+	}
 
 	err := buildCommand.Parse(commandArgs)
 	if err != nil {
