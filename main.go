@@ -18,10 +18,6 @@ func main() {
 	flagBoolVarP(&showVersion, "version", "v", false, "show version")
 	flagBoolVarP(&showHelp, "help", "h", false, "show help")
 
-	var buildAll bool = false
-	// buildCommand := flag.NewFlagSet("build", flag.ExitOnError)
-	// flagsetBoolVarP(&buildAll,"all", "a", false, "build for all platforms")
-
 	flag.Usage = func() {
 		_, file := filepath.Split(os.Args[0])
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", file)
@@ -33,8 +29,9 @@ func main() {
 
 	flag.SetInterspersed(false)
 	flag.Parse()
-	var err error
 
+	// Process the command line options or command
+	var err error
 	if showVersion {
 		fmt.Printf("v%s\n", version)
 	} else if showHelp || flag.NArg() == 0 {
@@ -43,7 +40,7 @@ func main() {
 		// Determine and execute the subcommand
 		switch flag.Args()[0] {
 		case "build":
-			err = build(buildAll)
+			err = build(flag.Args()[1:])
 
 		default:
 			err = fmt.Errorf("unknown command: %s", flag.Args()[0])
@@ -57,19 +54,36 @@ func main() {
 }
 
 func flagBoolVarP(flagVar *bool, name string, shorthand string, value bool, usage string) {
-	flag.BoolVar(flagVar, name, value, usage)
-	flag.BoolVar(flagVar, shorthand, value, usage)
+	// If we use flag, use:
+	// 	 flag.BoolVar(flagVar, name, value, usage)
+	// 	 flag.BoolVar(flagVar, shorthand, value, usage)
+
+	flag.BoolVarP(flagVar, name, shorthand, value, usage)
 }
 
 func flagsetBoolVarP(flagSet *flag.FlagSet, flagVar *bool, name string, shorthand string, value bool, usage string) {
-	flagSet.BoolVar(flagVar, name, value, usage)
-	flagSet.BoolVar(flagVar, shorthand, value, usage)
+	// If we use flag, use:
+	//   flagSet.BoolVar(flagVar, name, value, usage)
+	//   flagSet.BoolVar(flagVar, shorthand, value, usage)
+
+	flagSet.BoolVarP(flagVar, name, shorthand, value, usage)
 }
 
-func build(buildAll bool) error {
+func build(commandArgs []string) error {
+
+	var buildAll bool = false
+	buildCommand := flag.NewFlagSet("build", flag.ExitOnError)
+	flagsetBoolVarP(buildCommand, &buildAll, "all", "a", false, "build for all platforms")
+
+	err := buildCommand.Parse(commandArgs)
+	if err != nil {
+		return err
+	}
+
 	if buildAll {
 		fmt.Println("building for all platforms")
 	}
+
 	return nil
 }
 
