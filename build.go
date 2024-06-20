@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 
 	flag "github.com/spf13/pflag"
 )
@@ -18,7 +21,7 @@ func commandBuild(commandArgs []string) error {
 	buildCommand := flag.NewFlagSet("build", flag.ExitOnError)
 	buildCommand.BoolVarP(&showHelp, "help", "h", false, "show help for this command")
 
-	// Disable this until we can offer it?
+	// TODO: Disable this until we can offer it?
 	buildCommand.BoolVarP(&buildAll, "all", "a", false, "build for all platforms")
 
 	// These must be either both present or both absent
@@ -70,6 +73,26 @@ func commandBuild(commandArgs []string) error {
 	} else {
 		fmt.Printf(" for current platform\n")
 	}
+
+	// TODO: Deal with 'all' here by invoking the build function for each platform
+
+	return build(moduleName, goos, goarch)
+}
+
+func build(moduleName, goos string, goarch string) error {
+	args := fmt.Sprintf("-o %s", filepath.Join(moduleName, "bin", fmt.Sprintf("gomoku-%s-%s", goos, goarch)))
+	cmd := exec.Command("echo", strings.Split(args, " ")...)
+
+	stderr, _ := cmd.StderrPipe()
+	cmd.Start()
+
+	scanner := bufio.NewScanner(stderr)
+	scanner.Split(bufio.ScanWords)
+	for scanner.Scan() {
+		m := scanner.Text()
+		fmt.Println(m)
+	}
+	cmd.Wait()
 
 	return nil
 }
