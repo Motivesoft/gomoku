@@ -6,7 +6,8 @@
 * Clean
 * Test
 * Other build commands? lint, tidy, etc
-* Obtain/insert git tag 
+* Obtain/insert git tag - or user input to keep things simpler? 
+  * or some sort of option for source of version: none, git tag, user entry, ...?
 * Detect and include icon and/or winres folder
 * Configuration file for application name, dependencies, linker switches etc...
   * Consider platforms as config option with `build all`
