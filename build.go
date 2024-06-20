@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	flag "github.com/spf13/pflag"
@@ -75,31 +76,73 @@ func commandBuild(commandArgs []string) error {
 	}
 
 	// TODO: Deal with 'all' here by invoking the build function for each platform
-	var environment map[string]string = make(map[string]string)
-	output, err := exec.Command("go", "env").Output()
-	if err == nil {
-		for _, line := range strings.Split(string(output), "\n") {
-			parts := strings.SplitN(line, "=", 2)
-			if len(parts) == 2 {
-				environment[parts[0]] = parts[1]
-				fmt.Printf("> [%s] ==== [%s]\n", parts[0], parts[1])
-			}
+
+	// If goos and goarch are not specified, get their current platform values
+	if goos == "" || goarch == "" {
+		environment, err := getGoEnvironment()
+		if err != nil {
+			return err
 		}
-	} else {
-		return fmt.Errorf("failed to run 'go env': %s", err)
+
+		goos = environment["GOOS"]
+		goarch = environment["GOARCH"]
 	}
 
 	return build(module, goos, goarch)
 }
 
+// getGoEnvironment retrieves the Go environment variables and returns them as a map[string]string.
+//
+// It executes the 'go env' command and parses the output to extract the environment variables.
+// The environment variables are stored in a map with the variable name as the key and the value as the value.
+// If there is an error executing the 'go env' command, it returns nil and the error.
+//
+// Returns:
+// - map[string]string: A map containing the Go environment variables.
+// - error: An error if there was an issue executing the 'go env' command.
+func getGoEnvironment() (map[string]string, error) {
+	var environment map[string]string = make(map[string]string)
+
+	// We're looking for lines like the following:
+	// set GOOS=linux
+	regex := *regexp.MustCompile(`set (.*?)=(.*)`)
+
+	// Run the command so we can extract the environment variables
+	output, err := exec.Command("go", "env").Output()
+	if err == nil {
+		res := regex.FindAllStringSubmatch(string(output), -1)
+		for i := range res {
+			// Extract the environment variable name and value
+			environment[res[i][1]] = res[i][2]
+		}
+	} else {
+		return nil, fmt.Errorf("failed to run 'go env': %s", err)
+	}
+
+	return environment, nil
+}
+
 func build(module, goos string, goarch string) error {
-	var moduleName string = filepath.Base(module)
+	moduleName := filepath.Base(module)
 
-	// TODO: Make an executable name with/without the platform
+	executableName := fmt.Sprintf("%s-%s-%s", moduleName, goos, goarch)
+	if goos == "windows" {
+		executableName = executableName + ".exe"
+	}
 
-	args := fmt.Sprintf("-o %s", filepath.Join(".", "bin", fmt.Sprintf("%s-%s-%s", moduleName, goos, goarch)))
-	cmd := exec.Command("hype", strings.Split(args, " ")...)
+	// TODO: Make an executable name in a subdirectory?
+	//args := fmt.Sprintf("-o %s", filepath.Join(".", "bin", executableName))
 
+	// Build the command line, clause by clause.
+	//Start each clause with a space to ensure overall padding
+	var args string
+	args += " build"
+	args += fmt.Sprintf(" -o %s", executableName)
+
+	// Now invoke the command with the arguments
+	cmd := exec.Command("go", strings.Split(args, " ")...)
+
+	// TODO: Delete this debugging statement
 	fmt.Printf("Args:  %s\n", args)
 
 	stderr, _ := cmd.StderrPipe()
