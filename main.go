@@ -8,7 +8,15 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-var version string = "X.X.X"
+var version string = "0.0.0 (development)"
+
+// Prototype of a command function
+type commandFunc func([]string) error
+
+// Define a map of command names to their function pointers
+var commandMap = map[string]commandFunc{
+	"build": commandBuild,
+}
 
 func main() {
 	// Configure the flags
@@ -27,28 +35,34 @@ func main() {
 		fmt.Fprintf(os.Stderr, " --help, -h        show this help\n")
 	}
 
+	// Need to set this so that we can parse only the general options that come before the command name
+	// Otherwise, the flag parser will get upset by the any additional arguments that should only be passed to the
+	// command function
 	flag.SetInterspersed(false)
 	flag.Parse()
 
-	// Process the command line options or command
-	var err error
+	// Process the command line options or the requested command
 	if showVersion {
 		fmt.Printf("v%s\n", version)
 	} else if showHelp || flag.NArg() == 0 {
 		flag.Usage()
 	} else {
-		// Determine and execute the subcommand
-		switch flag.Args()[0] {
-		case "build":
-			err = commandBuild(flag.Args()[1:])
+		// Try and get the command function from the map and invoke it
+		commandName := flag.Args()[0]
+		commandFunction := commandMap[commandName]
 
-		default:
-			err = fmt.Errorf("unknown command: %s", flag.Args()[0])
+		var err error
+		if commandFunction == nil {
+			err = fmt.Errorf("unknown command: %s", commandName)
+		} else {
+			// Invoke the command
+			err = commandFunction(flag.Args()[1:])
 		}
-	}
 
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		// Handle any errors
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 }
