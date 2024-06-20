@@ -75,6 +75,14 @@ func commandBuild(commandArgs []string) error {
 		fmt.Printf(" for current platform\n")
 	}
 
+	if module == "." {
+		// Read the module from the current directory
+		module, err = getGoModule()
+		if err != nil {
+			return err
+		}
+	}
+
 	// TODO: Deal with 'all' here by invoking the build function for each platform
 
 	// If goos and goarch are not specified, get their current platform values
@@ -89,6 +97,15 @@ func commandBuild(commandArgs []string) error {
 	}
 
 	return build(module, goos, goarch)
+}
+
+func getGoModule() (string, error) {
+	output, err := exec.Command("go", "list", "./...").Output()
+	if err != nil {
+		return "", fmt.Errorf("failed to run 'go list': %s", err)
+	}
+
+	return string(output), nil
 }
 
 // getGoEnvironment retrieves the Go environment variables and returns them as a map[string]string.
