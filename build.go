@@ -60,12 +60,12 @@ func commandBuild(commandArgs []string) error {
 		return fmt.Errorf("cannot use --all with --goos and --goarch")
 	}
 
-	var moduleName string = "."
+	var module string = "."
 	if buildCommand.NArg() > 0 {
-		moduleName = buildCommand.Arg(0)
+		module = buildCommand.Arg(0)
 	}
 
-	fmt.Printf("Building '%s'", moduleName)
+	fmt.Printf("Building '%s'", module)
 	if buildAll {
 		fmt.Printf(" for all platforms\n")
 	} else if goos != "" && goarch != "" {
@@ -75,13 +75,32 @@ func commandBuild(commandArgs []string) error {
 	}
 
 	// TODO: Deal with 'all' here by invoking the build function for each platform
+	var environment map[string]string = make(map[string]string)
+	output, err := exec.Command("go", "env").Output()
+	if err == nil {
+		for _, line := range strings.Split(string(output), "\n") {
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) == 2 {
+				environment[parts[0]] = parts[1]
+				fmt.Printf("> [%s] ==== [%s]\n", parts[0], parts[1])
+			}
+		}
+	} else {
+		return fmt.Errorf("failed to run 'go env': %s", err)
+	}
 
-	return build(moduleName, goos, goarch)
+	return build(module, goos, goarch)
 }
 
-func build(moduleName, goos string, goarch string) error {
-	args := fmt.Sprintf("-o %s", filepath.Join(moduleName, "bin", fmt.Sprintf("gomoku-%s-%s", goos, goarch)))
-	cmd := exec.Command("echo", strings.Split(args, " ")...)
+func build(module, goos string, goarch string) error {
+	var moduleName string = filepath.Base(module)
+
+	// TODO: Make an executable name with/without the platform
+
+	args := fmt.Sprintf("-o %s", filepath.Join(".", "bin", fmt.Sprintf("%s-%s-%s", moduleName, goos, goarch)))
+	cmd := exec.Command("hype", strings.Split(args, " ")...)
+
+	fmt.Printf("Args:  %s\n", args)
 
 	stderr, _ := cmd.StderrPipe()
 	cmd.Start()
