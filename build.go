@@ -123,8 +123,8 @@ func getGoEnvironment() (map[string]string, error) {
 }
 
 func build(module, goos string, goarch string) error {
+	// Build the executable name
 	moduleName := filepath.Base(module)
-
 	executableName := fmt.Sprintf("%s-%s-%s", moduleName, goos, goarch)
 	if goos == "windows" {
 		executableName = executableName + ".exe"
@@ -138,6 +138,7 @@ func build(module, goos string, goarch string) error {
 	var args string
 	args += " build"
 	args += fmt.Sprintf(" -o %s", executableName)
+	args += fmt.Sprintf(" %s", module)
 
 	// Now invoke the command with the arguments
 	cmd := exec.Command("go", strings.Split(args, " ")...)
