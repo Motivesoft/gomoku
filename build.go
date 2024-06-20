@@ -134,9 +134,8 @@ func build(module, goos string, goarch string) error {
 	//args := fmt.Sprintf("-o %s", filepath.Join(".", "bin", executableName))
 
 	// Build the command line, clause by clause.
-	//Start each clause with a space to ensure overall padding
-	var args string
-	args += " build"
+	// Start each clause with a space to ensure overall padding
+	var args string = "build"
 	args += fmt.Sprintf(" -o %s", executableName)
 	args += fmt.Sprintf(" %s", module)
 
