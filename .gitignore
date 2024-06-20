@@ -8,6 +8,11 @@
 *.so
 *.dylib
 
+# Exclude executables we know we're going to build
+*-linux-*
+*-darwin-*
+*-windows-*.exe
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -21,13 +26,3 @@
 go.work
 go.work.sum
 
-# Exclude any built executables (.exe or no extension), but without accidentally excluding other files 
-# - files with ".exe"
-*.exe
-# - files with no extension at all, in the root directory
-/*
-# ...then we need to whitelist some things to stop the '*' being too pervasive
-# - whitelist anything that's a directory
-!*/
-# - whitelist files with extensions
-!*.*
