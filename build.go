@@ -17,8 +17,11 @@ func commandBuild(commandArgs []string) error {
 
 	buildCommand := flag.NewFlagSet("build", flag.ExitOnError)
 	buildCommand.BoolVarP(&showHelp, "help", "h", false, "show help for this command")
+
+	// Disable this until we can offer it?
 	buildCommand.BoolVarP(&buildAll, "all", "a", false, "build for all platforms")
 
+	// These must be either both present or both absent
 	buildCommand.StringVar(&goos, "goos", "", "Target platform")
 	buildCommand.StringVar(&goarch, "goarch", "", "Target architecture")
 
@@ -43,8 +46,29 @@ func commandBuild(commandArgs []string) error {
 		return nil
 	}
 
+	// Validate the options
+	if goos == "" {
+		if goarch != "" {
+			return fmt.Errorf("use of --goarch also requires --goos")
+		}
+	} else if goarch == "" {
+		return fmt.Errorf("use of --goos also requires --goarch")
+	} else if buildAll {
+		return fmt.Errorf("cannot use --all with --goos and --goarch")
+	}
+
+	var moduleName string = "."
+	if buildCommand.NArg() > 0 {
+		moduleName = buildCommand.Arg(0)
+	}
+
+	fmt.Printf("Building '%s'", moduleName)
 	if buildAll {
-		fmt.Println("building for all platforms")
+		fmt.Printf(" for all platforms\n")
+	} else if goos != "" && goarch != "" {
+		fmt.Printf(" for %s/%s\n", goos, goarch)
+	} else {
+		fmt.Printf(" for current platform\n")
 	}
 
 	return nil
